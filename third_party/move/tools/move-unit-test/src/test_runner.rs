@@ -178,12 +178,7 @@ impl TestRunner {
                     .module_tests
                     .par_iter()
                     .map(|(_, plan)| {
-                        self.testing_config.exec_module_tests(
-                            plan,
-                            writer,
-                            options,
-                            self.testing_config.fail_fast,
-                        )
+                        self.testing_config.exec_module_tests( plan, writer, options)
                     })
                     .try_reduce(TestStatistics::new, |a, b| Ok(a.combine(b)));
                 // If we got an error, it must be a fail-fast error, so extract the stats until the first failure.
@@ -356,7 +351,6 @@ impl SharedTestingConfig {
         test_plan: &ModuleTestPlan,
         output: &TestOutput<impl Write>,
         factory: &Mutex<F>,
-        fail_fast: bool,
     ) -> Result<TestStatistics> {
         let mut stats = TestStatistics::new();
 
@@ -429,7 +423,7 @@ impl SharedTestingConfig {
                                 ),
                                 test_plan,
                             );
-                            if fail_fast {
+                            if self.fail_fast {
                                 return Err(FailFast(stats).into());
                             }
                         },
@@ -447,7 +441,7 @@ impl SharedTestingConfig {
                                 ),
                                 test_plan,
                             );
-                            if fail_fast {
+                            if self.fail_fast {
                                 return Err(FailFast(stats).into());
                             }
                         },
@@ -463,7 +457,7 @@ impl SharedTestingConfig {
                                 ),
                                 test_plan,
                             );
-                            if fail_fast {
+                            if self.fail_fast {
                                 return Err(FailFast(stats).into());
                             }
                         },
@@ -478,7 +472,7 @@ impl SharedTestingConfig {
                                 ),
                                 test_plan,
                             );
-                            if fail_fast {
+                            if self.fail_fast {
                                 return Err(FailFast(stats).into());
                             }
                         },
@@ -514,9 +508,8 @@ impl SharedTestingConfig {
         test_plan: &ModuleTestPlan,
         writer: &Mutex<impl Write>,
         factory: &Mutex<F>,
-        fail_fast: bool,
     ) -> Result<TestStatistics> {
         let output = TestOutput { test_plan, writer };
-        self.exec_module_tests_move_vm_and_stackless_vm(test_plan, &output, factory, fail_fast)
+        self.exec_module_tests_move_vm_and_stackless_vm(test_plan, &output, factory)
     }
 }
