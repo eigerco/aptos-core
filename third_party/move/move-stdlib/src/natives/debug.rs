@@ -61,7 +61,15 @@ fn native_print(
             single_line,
             include_int_types,
         )?;
-        println!("{}", out);
+
+        // Only print if MOVE_VM_PRINT_DEBUG is not set to "false"
+        let should_print = std::env::var("MOVE_VM_PRINT_DEBUG")
+            .map(|v| v != "false")
+            .unwrap_or(true);
+
+        if should_print {
+            println!("{}", out);
+        }
     }
 
     Ok(NativeResult::ok(gas_params.base_cost, smallvec![]))
@@ -103,7 +111,15 @@ fn native_print_stack_trace(
     {
         let mut s = String::new();
         context.print_stack_trace(&mut s)?;
-        println!("{}", s);
+
+        // Only print if MOVE_VM_PRINT_DEBUG is not set to "false"
+        let should_print = std::env::var("MOVE_VM_PRINT_DEBUG")
+            .map(|v| v != "false")
+            .unwrap_or(true);
+
+        if should_print {
+            println!("{}", s);
+        }
     }
 
     Ok(NativeResult::ok(gas_params.base_cost, smallvec![]))

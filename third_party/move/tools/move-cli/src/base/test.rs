@@ -286,6 +286,11 @@ pub fn run_move_unit_tests_with_factory<W: Write + Send, F: UnitTestFactory + Se
         std::env::set_var("MOVE_VM_TRACE", &trace_path);
     }
 
+    // Set MOVE_VM_PRINT_DEBUG based on the print_errors flag
+    if !build_config.compiler_config.print_errors {
+        std::env::set_var("MOVE_VM_PRINT_DEBUG", "false");
+    }
+
     // Run the tests. If any of the tests fail, then we don't produce a coverage report, so cleanup
     // the trace files.
     if !unit_test_config

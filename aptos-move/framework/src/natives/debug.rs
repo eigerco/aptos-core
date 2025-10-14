@@ -37,10 +37,17 @@ fn native_print(
         let val = safely_pop_arg!(args, Struct);
         let bytes = val.unpack()?.next().unwrap();
 
-        println!(
-            "[debug] {}",
-            std::str::from_utf8(&bytes.value_as::<Vec<u8>>()?).unwrap()
-        );
+        // Only print if MOVE_VM_PRINT_DEBUG is not set to "false"
+        let should_print = std::env::var("MOVE_VM_PRINT_DEBUG")
+            .map(|v| v != "false")
+            .unwrap_or(true);
+
+        if should_print {
+            println!(
+                "[debug] {}",
+                std::str::from_utf8(&bytes.value_as::<Vec<u8>>()?).unwrap()
+            );
+        }
     }
 
     Ok(smallvec![])
@@ -80,10 +87,17 @@ fn native_old_debug_print(
         let x = safely_pop_arg!(args, Reference);
         let val = x.read_ref().map_err(SafeNativeError::InvariantViolation)?;
 
-        println!(
-            "[debug] {}",
-            native_format_debug(context, &ty_args[0], val)?
-        );
+        // Only print if MOVE_VM_PRINT_DEBUG is not set to "false"
+        let should_print = std::env::var("MOVE_VM_PRINT_DEBUG")
+            .map(|v| v != "false")
+            .unwrap_or(true);
+
+        if should_print {
+            println!(
+                "[debug] {}",
+                native_format_debug(context, &ty_args[0], val)?
+            );
+        }
     }
     Ok(smallvec![])
 }
@@ -100,7 +114,15 @@ fn native_old_print_stacktrace(
     if cfg!(feature = "testing") {
         let mut s = String::new();
         context.print_stack_trace(&mut s)?;
-        println!("{}", s);
+
+        // Only print if MOVE_VM_PRINT_DEBUG is not set to "false"
+        let should_print = std::env::var("MOVE_VM_PRINT_DEBUG")
+            .map(|v| v != "false")
+            .unwrap_or(true);
+
+        if should_print {
+            println!("{}", s);
+        }
     }
     Ok(smallvec![])
 }
