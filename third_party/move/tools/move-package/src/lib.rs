@@ -79,6 +79,11 @@ pub struct BuildConfig {
     #[clap(name = "force-recompilation", long = "force", global = true)]
     pub force_recompilation: bool,
 
+    /// Enable incremental compilation (skip recompilation of unchanged packages even in test mode).
+    /// Useful for mutation testing and iterative development.
+    #[clap(long = "incremental", global = true)]
+    pub incremental: bool,
+
     /// Additional named address mapping. Useful for tools in rust
     #[clap(skip)]
     pub additional_named_addresses: BTreeMap<String, AccountAddress>,

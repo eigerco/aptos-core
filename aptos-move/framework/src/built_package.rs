@@ -218,6 +218,7 @@ pub fn build_model(
             experiments,
             print_errors: true,
         },
+        incremental: false,
     };
     let compiler_version = compiler_version.unwrap_or_default();
     let language_version = language_version.unwrap_or_default();
@@ -269,6 +270,7 @@ impl BuiltPackage {
                 experiments: options.experiments.clone(),
                 print_errors: true,
             },
+            incremental: false,
         })
     }
 
@@ -518,6 +520,7 @@ impl BuiltPackage {
             .package
             .compiled_package_info
             .source_digest
+            .as_ref()
             .map(|s| s.to_string())
             .unwrap_or_default();
         let manifest_file = self.package_path.join("Move.toml");

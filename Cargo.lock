@@ -12657,9 +12657,11 @@ name = "move-package"
 version = "0.1.0"
 dependencies = [
  "anyhow",
+ "bcs 0.1.4",
  "clap 4.5.21",
  "colored",
  "datatest-stable",
+ "dirs 5.0.1",
  "itertools 0.13.0",
  "legacy-move-compiler",
  "move-abigen",

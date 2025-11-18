@@ -9,8 +9,10 @@ edition = { workspace = true }
 
 [dependencies]
 anyhow = { workspace = true }
+bcs = { workspace = true }
 clap = { workspace = true, features = ["derive"] }
 colored = { workspace = true }
+dirs = { workspace = true }
 itertools = { workspace = true }
 legacy-move-compiler = { workspace = true }
 move-abigen = { workspace = true }

@@ -547,6 +547,11 @@ pub struct TestPackage {
     /// Fail-fast mode: stop running tests after the first failure.
     #[clap(long = "fail-fast")]
     pub fail_fast: bool,
+
+    /// Enable incremental compilation (skip recompilation of unchanged packages even in test mode).
+    /// Useful for mutation testing and iterative development.
+    #[clap(long = "incremental")]
+    pub incremental: bool,
 }
 
 pub(crate) fn fix_bytecode_version(
@@ -576,6 +581,7 @@ impl CliCommand<&'static str> for TestPackage {
             dev_mode: self.move_options.dev,
             additional_named_addresses: self.move_options.named_addresses(),
             test_mode: true,
+            incremental: self.incremental,
             full_model_generation: !self.move_options.skip_checks_on_test_code,
             install_dir: self.move_options.output_dir.clone(),
             skip_fetch_latest_git_deps: self.move_options.skip_fetch_latest_git_deps,

@@ -287,11 +287,23 @@ impl OnDiskCompiledPackage {
     pub(crate) fn has_source_changed_since_last_compile(
         &self,
         resolved_package: &ResolvedPackage,
-    ) -> bool {
+
+) -> bool {
         match &self.package.compiled_package_info.source_digest {
             // Don't have source available to us
             None => false,
             Some(digest) => digest != &resolved_package.source_digest,
+        }
+    }
+
+    /// Get the list of files that have changed since last compilation
+    pub(crate) fn get_changed_files(
+        &self,
+        resolved_package: &ResolvedPackage,
+    ) -> Vec<std::path::PathBuf> {
+        match &self.package.compiled_package_info.source_digest {
+            None => vec![], // No previous compilation
+            Some(old_digest) => old_digest.get_changed_files(&resolved_package.source_digest),
         }
     }
 
@@ -516,12 +528,38 @@ impl CompiledPackage {
         resolved_package: &ResolvedPackage,
         is_root_package: bool,
     ) -> bool {
+        // Log changed files for visibility (useful for mutation testing)
+        if std::env::var("MOVE_VM_VERBOSE_COMPILATION").is_ok() {
+            let changed_files = package.get_changed_files(resolved_package);
+            if !changed_files.is_empty() {
+                eprintln!("[incremental] Package '{}': {} file(s) changed:",
+                    resolved_package.source_package.package.name,
+                    changed_files.len());
+                for file in &changed_files {
+                    eprintln!("[incremental]   - {}", file.display());
+                }
+            } else if is_root_package && resolution_graph.build_options.test_mode {
+                if resolution_graph.build_options.incremental {
+                    eprintln!("[incremental] Package '{}': No files changed, using cached compilation (--incremental enabled)",
+                        resolved_package.source_package.package.name);
+                } else {
+                    eprintln!("[incremental] Package '{}': No files changed, but forced recompilation due to test_mode (use --incremental to enable caching)",
+                        resolved_package.source_package.package.name);
+                }
+            }
+        }
+
         // TODO: add more tests for the different caching cases
         !(package.has_source_changed_since_last_compile(resolved_package) // recompile if source has changed
             // Recompile if the flags are different
             || package.are_build_flags_different(&resolution_graph.build_options)
-            // Force root package recompilation in test mode
-            || resolution_graph.build_options.test_mode && is_root_package
+            // Force root package recompilation in test mode (unless incremental mode is enabled)
+            // NOTE: This is the main bottleneck for mutation testing - even when only
+            // one file changes, we recompile all files in the package.
+            // With --incremental flag, we allow caching even in test mode.
+            || (resolution_graph.build_options.test_mode
+                && is_root_package
+                && !resolution_graph.build_options.incremental)
             // Recompile if force recompilation is set
             || resolution_graph.build_options.force_recompilation) &&
             // Dive deeper to make sure that instantiations haven't changed since that
