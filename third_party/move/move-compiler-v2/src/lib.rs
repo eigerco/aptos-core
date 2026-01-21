@@ -54,7 +54,7 @@ use legacy_move_compiler::{
     diagnostics::FilesSourceText,
     shared::known_attributes::KnownAttribute,
 };
-use log::{debug, info, log_enabled, Level};
+use log::{debug, log_enabled, Level};
 use move_binary_format::errors::VMError;
 use move_bytecode_source_map::source_map::SourceMap;
 use move_core_types::vm_status::StatusType;
@@ -92,7 +92,7 @@ where
     E: Emitter + ?Sized,
 {
     logging::setup_logging(None);
-    info!("Move Compiler v2");
+    debug!("Move Compiler v2");
 
     // Run context check.
     let mut env = run_checker(options.clone())?;
@@ -188,7 +188,7 @@ pub fn run_move_compiler_for_analysis(
 /// Run the type checker and return the global env (with errors if encountered). The result
 /// fails not on context checking errors, but possibly on i/o errors.
 pub fn run_checker(options: Options) -> anyhow::Result<GlobalEnv> {
-    info!("type checking");
+    debug!("type checking");
     // Run the model builder, which performs context checking.
     let addrs = move_model::parse_addresses_from_options(options.named_address_mapping.clone())?;
     let mut env = move_model::run_model_builder_in_compiler_mode(

@@ -1144,7 +1144,7 @@ impl<'a> FunctionGenerator<'a> {
                     );
                 }
             },
-            Operation::BorrowGlobal(mid, sid, inst) => {
+            Operation::BorrowGlobal(mid, sid, inst, _) => {
                 let is_mut = fun_ctx.fun.get_local_type(dest[0]).is_mutable_reference();
                 self.gen_struct_oper(
                     ctx,

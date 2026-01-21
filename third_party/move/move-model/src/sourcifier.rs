@@ -1258,6 +1258,16 @@ impl<'a> ExpSourcifier<'a> {
                 self.print_node_inst(id);
                 self.print_exp_list("(", ")", args)
             }),
+            Operation::Drop => self.parenthesize(context_prio, Prio::Postfix, || {
+                emit!(self.wr(), "drop");
+                self.print_node_inst(id);
+                self.print_exp_list("(", ")", args)
+            }),
+            Operation::Release => self.parenthesize(context_prio, Prio::Postfix, || {
+                emit!(self.wr(), "release");
+                self.print_node_inst(id);
+                self.print_exp_list("(", ")", args)
+            }),
             Operation::MoveFrom => self.parenthesize(context_prio, Prio::Postfix, || {
                 emit!(self.wr(), "move_from");
                 self.print_node_inst(id);

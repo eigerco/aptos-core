@@ -708,7 +708,7 @@ impl TransferFunctions for BorrowAnalysis<'_> {
                         state.add_node(dest_node.clone());
                         state.add_edge(src_node, dest_node, BorrowEdge::Direct);
                     },
-                    BorrowGlobal(mid, sid, inst)
+                    BorrowGlobal(mid, sid, inst, _)
                         if livevar_annotation_at.after.contains(&dests[0]) =>
                     {
                         let dest_node = self.borrow_node(dests[0]);

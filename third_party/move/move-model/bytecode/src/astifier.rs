@@ -1118,7 +1118,7 @@ impl Generator {
                 let rhs = self.make_temp(ctx, srcs[0]);
                 self.gen_match(ctx, dests, qsid, Some(*variant), rhs);
             },
-            BorrowGlobal(mid, sid, inst) => {
+            BorrowGlobal(mid, sid, inst, _) => {
                 let ty = Type::Struct(*mid, *sid, inst.to_vec());
                 self.gen_call_stm(
                     ctx,
@@ -1128,6 +1128,8 @@ impl Generator {
                     srcs,
                 );
             },
+            Drop => self.gen_call_stm(ctx, None, dests, Operation::Drop, srcs),
+            Release => self.gen_call_stm(ctx, None, dests, Operation::Release, srcs),
             BorrowLoc => self.gen_call_stm(
                 ctx,
                 None,
@@ -1163,9 +1165,6 @@ impl Generator {
                     Operation::SelectVariants(*mid, *sid, field_ids),
                     srcs,
                 )
-            },
-            Drop | Release => {
-                // Do nothing
             },
             ReadRef => self.gen_call_stm(ctx, None, dests, Operation::Deref, srcs),
             WriteRef => {
@@ -2391,7 +2390,9 @@ impl AssignTransformer<'_> {
                 | Operation::EventStoreIncludedIn
                 | Operation::EventStoreIncludes
                 | Operation::ExtendEventStore
-                | Operation::NoOp => false,
+                | Operation::NoOp
+                | Operation::Release
+                | Operation::Drop => false,
             },
             ExpData::Value(..)
             | ExpData::Temporary(..)

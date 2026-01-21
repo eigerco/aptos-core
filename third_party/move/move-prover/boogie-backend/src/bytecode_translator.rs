@@ -2352,7 +2352,7 @@ impl FunctionTranslator<'_> {
                             addr_str
                         );
                     },
-                    BorrowGlobal(mid, sid, inst) => {
+                    BorrowGlobal(mid, sid, inst, _) => {
                         let inst = self.inst_slice(inst);
                         let addr_str = str_local(srcs[0]);
                         let dest_str = str_local(dests[0]);

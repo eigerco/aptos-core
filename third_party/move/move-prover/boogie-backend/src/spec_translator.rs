@@ -1153,6 +1153,8 @@ impl SpecTranslator<'_> {
             | Operation::BorrowGlobal(_)
             | Operation::Borrow(..)
             | Operation::Deref
+            | Operation::Release
+            | Operation::Drop
             | Operation::MoveTo
             | Operation::MoveFrom
             | Operation::Closure(..)

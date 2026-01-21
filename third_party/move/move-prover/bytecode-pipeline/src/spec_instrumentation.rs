@@ -398,7 +398,7 @@ impl<'a> Instrumenter<'a> {
         // the BorrowGlobal at this point represents a mutation and immutable references have
         // been removed.
         match &bc {
-            Call(id, _, BorrowGlobal(mid, sid, targs), srcs, _)
+            Call(id, _, BorrowGlobal(mid, sid, targs, _), srcs, _)
             | Call(id, _, MoveFrom(mid, sid, targs), srcs, _) => {
                 let addr_exp = self.builder.mk_temporary(srcs[0]);
                 self.generate_modifies_check(
@@ -773,6 +773,7 @@ impl<'a> Instrumenter<'a> {
                         ghost_mem.module_id,
                         ghost_mem.id,
                         ghost_mem.inst.clone(),
+                        true,
                     ),
                     vec![addr_temp],
                     None,
