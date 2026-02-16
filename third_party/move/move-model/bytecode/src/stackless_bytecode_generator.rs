@@ -13,6 +13,7 @@ use crate::{
 };
 use codespan_reporting::diagnostic::Severity;
 use itertools::Itertools;
+use log::debug;
 use move_binary_format::{
     access::ModuleAccess,
     file_format::{
@@ -102,6 +103,7 @@ impl<'a> StacklessBytecodeGenerator<'a> {
             .get_bytecode()
             .expect(COMPILED_MODULE_AVAILABLE);
         let mut label_map = BTreeMap::new();
+        let mut borrow_map: BTreeMap<StructId, Vec<TempIndex>> = BTreeMap::new();
 
         // Generate labels.
         for (pos, bytecode) in original_code.iter().enumerate() {
@@ -127,7 +129,12 @@ impl<'a> StacklessBytecodeGenerator<'a> {
 
         // Generate bytecode.
         for (code_offset, bytecode) in original_code.iter().enumerate() {
-            self.generate_bytecode(bytecode, code_offset as CodeOffset, &label_map);
+            self.generate_bytecode(
+                bytecode,
+                code_offset as CodeOffset,
+                &label_map,
+                &mut borrow_map,
+            );
         }
 
         // Eliminate fall-through for non-branching instructions
@@ -236,6 +243,7 @@ impl<'a> StacklessBytecodeGenerator<'a> {
         bytecode: &MoveBytecode,
         code_offset: CodeOffset,
         label_map: &BTreeMap<CodeOffset, Label>,
+        borrow_map: &mut BTreeMap<StructId, Vec<TempIndex>>,
     ) {
         // Add label if defined at this code offset.
         if let Some(label) = label_map.get(&code_offset) {
@@ -321,6 +329,17 @@ impl<'a> StacklessBytecodeGenerator<'a> {
             },
 
             MoveBytecode::Abort => {
+                if let Some(acquires) = self.func_env.get_acquires_global_resources() {
+                    for acquire in acquires {
+                        debug!("acquire global resource: {acquire:?}");
+                        let indices = borrow_map.get(&acquire).unwrap_or(&vec![]).clone();
+                        debug!("acquire indices: {indices:?}");
+                        if !indices.is_empty() {
+                            debug!("emitting release for acquire: {acquire:?}");
+                            self.code.push(mk_call(Operation::Release, vec![], indices));
+                        }
+                    }
+                }
                 let error_code_index = self.temp_stack.pop().unwrap();
                 self.code
                     .push(Bytecode::Abort(attr_id, error_code_index, None));
@@ -347,6 +366,17 @@ impl<'a> StacklessBytecodeGenerator<'a> {
             },
 
             MoveBytecode::Ret => {
+                if let Some(acquires) = self.func_env.get_acquires_global_resources() {
+                    for acquire in acquires {
+                        debug!("acquire global resource: {acquire:?}");
+                        let indices = borrow_map.get(&acquire).unwrap_or(&vec![]).clone();
+                        debug!("acquire indices: {indices:?}");
+                        if !indices.is_empty() {
+                            debug!("emitting release for acquire: {acquire:?}");
+                            self.code.push(mk_call(Operation::Release, vec![], indices));
+                        }
+                    }
+                }
                 let mut return_temps = vec![];
                 for _ in 0..self.func_env.get_return_count() {
                     let return_temp_index = self.temp_stack.pop().unwrap();
@@ -1525,6 +1555,16 @@ impl<'a> StacklessBytecodeGenerator<'a> {
                     temp_index,
                     operand_index,
                 ));
+
+                let struct_id = self.func_env.module_env.get_struct_id(*idx);
+                debug!(
+                    "Adding borrow for struct {:?} in function {:?}",
+                    struct_id,
+                    self.func_env.get_full_name_str()
+                );
+                borrow_map
+                    .entry(struct_id)
+                    .or_insert(vec![operand_index, temp_index]);
             },
 
             MoveBytecode::MutBorrowGlobalGeneric(idx)
@@ -1560,6 +1600,16 @@ impl<'a> StacklessBytecodeGenerator<'a> {
                     temp_index,
                     operand_index,
                 ));
+
+                let struct_id = struct_env.get_id();
+                debug!(
+                    "Adding borrow for struct {:?} in function {:?}",
+                    struct_id,
+                    self.func_env.get_full_name_str()
+                );
+                borrow_map
+                    .entry(struct_id)
+                    .or_insert(vec![operand_index, temp_index]);
             },
 
             MoveBytecode::MoveFrom(idx) => {
